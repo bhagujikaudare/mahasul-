@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>महसूल दाखला व स्व-घोषणापत्र अर्ज जनरेटर</title>
+    <!-- Google Transliteration API इंग्रजी ते मराठी ऑटो ट्रान्सलेटसाठी -->
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+        .container { max-width: 800px; background: white; padding: 30px; margin: auto; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #1a73e8; margin-bottom: 25px; }
+        .form-section { background: #f9f9f9; padding: 15px 20px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #1a73e8; }
+        .form-section h3 { margin-top: 0; color: #333; font-size: 18px; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 12px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 220px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #444; font-size: 14px; }
+        input[type="text"], input[type="date"], input[type="number"], select, textarea { width: 100%; padding: 9px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        .conditional-box { display: none; background: #fff; padding: 12px; border: 1px dashed #1a73e8; border-radius: 4px; margin-top: 10px; }
+        
+        .submit-btn { background: #28a745; color: white; border: none; padding: 12px 20px; font-size: 16px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+        .submit-btn:hover { background: #218838; }
+
+        /* प्रिन्ट आणि पीडीएफ डिझाइन */
+        #certificate { display: none; background: white; padding: 30px; border: 2px solid #333; margin-top: 20px; position: relative; font-size: 13px; line-height: 1.6; }
+        .cert-box { border: 1px solid #000; padding: 15px; margin-bottom: 20px; position: relative; }
+        .photo-box { width: 90px; height: 110px; border: 1px solid #000; position: absolute; right: 15px; top: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #eee; }
+        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .sign-box { width: 110px; height: 40px; border: 1px solid #000; display: inline-block; vertical-align: middle; text-align: center; overflow: hidden; background: #eee; }
+        .sign-box img { width: 100%; height: 100%; object-fit: contain; }
+
+        .cert-header { text-align: center; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #000; padding-bottom: 5px; }
+        .print-btn { background: #007bff; margin-top: 20px; }
+        .print-btn:hover { background: #0056b3; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #certificate, #certificate * { visibility: visible; }
+            #certificate { position: absolute; left: 0; top: 0; width: 100%; border: none; margin: 0; padding: 10px; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="no-print">
+        <h2>महसूल दाखला व स्व-घोषणापत्र अर्ज फॉर्म</h2>
+        <form id="appForm" onsubmit="generateDocument(event)">
+            
+            <!-- वैयक्तिक माहिती -->
+            <div class="form-section">
+                <h3>१. अर्जदाराची वैयक्तिक माहिती (इंग्रजी टाईप करा, मराठीत आपोआप येईल किंवा सुधारणा करा)</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>संबोध:</label>
+                        <select id="prefix" required>
+                            <option value="श्री.">श्री.</option>
+                            <option value="सौ.">सौ.</option>
+                            <option value="श्रीमती">श्रीमती</option>
+                            <option value="कुमार">कुमार</option>
+                            <option value="कु.">कु.</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>अर्जदाराचे नाव (इंग्रजी - English):</label>
+                        <input type="text" id="appNameEn" required placeholder="Rahul Balu Kaudare" onkeyup="convertToMarathi(this.value, 'appNameMr')">
+                    </div>
+                    <div class="form-group">
+                        <label>अर्जदाराचे नाव (मराठी - Correction सह):</label>
+                        <input type="text" id="appNameMr" required placeholder="मराठीत नाव येईल किंवा बदल करा">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>वडीलांचे नाव (इंग्रजी):</label>
+                        <input type="text" id="fatherNameEn" required placeholder="Balu Maruti Kaudare" onkeyup="convertToMarathi(this.value, 'fatherNameMr')">
+                    </div>
+                    <div class="form-group">
+                        <label>वडीलांचे नाव (मराठी - Correction सह):</label>
+                        <input type="text" id="fatherNameMr" required placeholder="वडीलांचे मराठी नाव">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>आधार क्रमांक (Aadhaar No.):</label>
+                        <input type="text" id="aadharNo" maxlength="12" placeholder="XXXX XXXX XXXX">
+                    </div>
+                    <div class="form-group">
+                        <label>जन्म तारीख:</label>
+                        <input type="date" id="dob" required onchange="calculateAge()">
+                    </div>
+                    <div class="form-group">
+                        <label>वय (वर्षे - स्वतः टाकू शकता):</label>
+                        <input type="number" id="age" required placeholder="वय">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>व्यवसाय:</label>
+                        <input type="text" id="occupation" placeholder="उदा. शेती / नोकरी">
+                    </div>
+                </div>
+            </div>
+
+            <!-- पत्ता व वास्तव्याची माहिती -->
+            <div class="form-section">
+                <h3>२. पत्ता व वास्तव्याची माहिती</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>सध्याचा पत्ता:</label>
+                        <textarea id="currentAddress" rows="2" required placeholder="घर क्र, गल्ली, गाव, तालुका, जिल्हा, पिनकोड"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>कायमचा पत्ता:</label>
+                        <textarea id="permanentAddress" rows="2" required placeholder="तपशील भरा"></textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>जन्माचे ठिकाण (पिनकोड सह):</label>
+                        <input type="text" id="birthPlace" required placeholder="गाव, तालुका, जिल्हा - पिनकोड">
+                    </div>
+                    <div class="form-group">
+                        <label>सध्याच्या पत्त्यावर किती वर्षापासून राहत आहात?</label>
+                        <input type="text" id="residenceYears" required placeholder="उदा. २५ वर्षे किंवा जन्मापासून">
+                    </div>
+                    <div class="form-group">
+                        <label>महाराष्ट्रात १५ वर्षापासून राहत आहेत का?</label>
+                        <select id="res15Years">
+                            <option value="होय">होय</option>
+                            <option value="नाही">नाही</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ३. हवा असलेला दाखला निवडा (फक्त एकच ड्रॉप-डाउन ऑप्शन) -->
+            <div class="form-section">
+                <h3>३. हवा असलेला दाखला निवडा</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>दाखल्याचा प्रकार निवडा:</label>
+                        <select id="certTypeSelect" onchange="handleCertificateSelection()" required>
+                            <option value="">-- दाखला निवडा --</option>
+                            <option value="उत्पन्नाचा दाखला">उत्पन्नाचा दाखला (Income Certificate)</option>
+                            <option value="जातीचा दाखला">जातीचा दाखला (Caste Certificate)</option>
+                            <option value="रहिवासी / डोमसाईल दाखला">रहिवासी / डोमसाईल दाखला (Domicile / Residence)</option>
+                            <option value="नॉन क्रिमिलियर प्रमाणपत्र">नॉन क्रिमिलियर प्रमाणपत्र (Non-Creamy Layer)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- उत्पन्नाचा दाखला विशेष माहिती -->
+                <div id="sectionIncome" class="conditional-box">
+                    <h4>उत्पन्नाच्या दाखल्यासाठी अतिरिक्त माहिती व पुरावे</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>कोणासाठी हवा आहे? (नाते):</label>
+                            <select id="incRelation">
+                                <option value="स्वयं (स्वतःसाठी)">स्वतःसाठी</option>
+                                <option value="आई">आई</option>
+                                <option value="वडील">वडील</option>
+                                <option value="भाऊ">भाऊ</option>
+                                <option value="बहीण">बहीण</option>
+                                <option value="पती / पत्नी">पती / पत्नी</option>
+                                <option value="नातू / नात">नातू / नात</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>मागील १ वर्षाचे उत्पन्न (रुपयांत):</label>
+                            <input type="number" id="inc1Year" placeholder="उदा. 50000">
+                        </div>
+                        <div class="form-group">
+                            <label>मागील ३ वर्षाचे उत्पन्न (तपशील):</label>
+                            <input type="text" id="inc3Years" placeholder="उदा. वर्ष २०२४, २०२५, २०२६ चे उत्पन्न">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- जातीचा दाखला विशेष माहिती -->
+                <div id="sectionCaste" class="conditional-box">
+                    <h4>जातीच्या दाखल्यासाठी अतिरिक्त माहिती व पुरावे</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>जात व प्रवर्ग (Category):</label>
+                            <input type="text" id="casteCategory" placeholder="उदा. कुणबी (OBC), एससी, एसटी, एसबीसी">
+                        </div>
+                        <div class="form-group">
+                            <label>जुना पुरावा प्रकार व तपशील (१९६७ / १९५० पूर्वीचा):</label>
+                            <input type="text" id="casteProof" placeholder="उदा. शाळा सोडल्याचा दाखला / वडीलांची ७/१२ उतारा (कोणाचे नाव आहे)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- नॉन क्रिमिलियर विशेष माहिती -->
+                <div id="sectionNonCreamy" class="conditional-box">
+                    <h4>नॉन क्रिमिलियर प्रमाणपत्रासाठी माहिती व पुरावे</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>आईचे पूर्ण नाव:</label>
+                            <input type="text" id="ncMotherName" placeholder="आईचे नाव">
+                        </div>
+                        <div class="form-group">
+                            <label>वडीलांचे पूर्ण नाव व वय:</label>
+                            <input type="text" id="ncFatherDetails" placeholder="नाव व वय">
+                        </div>
+                        <div class="form-group">
+                            <label>मागील ३ वर्षाचे कौटुंबिक उत्पन्न व तलाठी अहवाल तपशील:</label>
+                            <input type="text" id="nc3YearIncome" placeholder="उत्पन्न तपशील">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- फोटो व सही अपलोड -->
+            <div class="form-section">
+                <h3>४. फोटो आणि सही अपलोड करा</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>पासपोर्ट साईझ फोटो:</label>
+                        <input type="file" id="appPhoto" accept="image/*" required>
+                    </div>
+                    <div class="form-group">
+                        <label>स्वाक्षरी (Signature):</label>
+                        <input type="file" id="appSign" accept="image/*" required>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn">स्व-घोषणापत्र व अर्ज तयार करा</button>
+        </form>
+    </div>
+
+    <!-- प्रीव्ह्यू आणि प्रिंट फॉरमॅट -->
+    <div id="certificate">
+        <div class="cert-box">
+            <div class="photo-box">
+                <img id="displayPhoto" src="" alt="फोटो">
+            </div>
+            <div class="cert-header">
+                <h3>प्रपत्र - (अ)</h3>
+                <h3>स्वयं-घोषणापत्र (Self-Declaration)</h3>
+            </div>
+            <p>
+                मी <span id="pPrefix"></span> <span id="pName"></span>, वय <span id="pAge"></span> वर्षे, 
+                आधार क्रमांक: <span id="pAadhar"></span>, व्यवसाय: <span id="pOcc"></span>, 
+                राहणार: <span id="pCurrAdd"></span>, ता. खेड, जि. पुणे, याद्वारे घोषित करतो/करते की, वरील सर्व माहिती माझ्या वैयक्तिक माहितीनुसार व समजतीनुसार खरी व बरोबर आहे. 
+                सदरची माहिती खोटी किंवा चुकीची असल्याचे आढळल्यास, भारतीय दंडसंहिता १९६० मधील कलम १९९ व २०० व इतर संबंधित कायद्यानुसार होणाऱ्या शिक्षेस मी पात्र राहीन याची मला पूर्ण जाणीव आहे.
+            </p>
+            <br>
+            <table style="width: 100%; border: none;">
+                <tr>
+                    <td>ठिकाण: खेड<br>दिनांक: <span id="pDate"></span></td>
+                    <td style="text-align: center;">
+                        <div class="sign-box"><img id="displaySign" src="" alt="सही"></div><br>
+                        <span>अर्जदाराची सही / अंगठा</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="padding-top: 10px;">अर्जदाराचे नाव: <strong><span id="pFullNameBottom"></span></strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="cert-box" id="extraDetailsBox">
+            <div class="cert-header">
+                <h3>निवडलेला दाखला व तपशीलवार सारांश</h3>
+            </div>
+            <p><strong>वडिलांचे नाव:</strong> <span id="pFatherName"></span></p>
+            <p><strong>जन्मतारीख व जन्म ठिकाण:</strong> <span id="pDobOut"></span> | <span id="pBirthPlaceOut"></span></p>
+            <p><strong>मागितलेला मुख्य दाखला:</strong> <span id="pSelectedCertType"></span></p>
+            
+            <p id="summaryIncome" style="display:none;"><strong>उत्पन्न तपशील:</strong> नाते: <span id="pRel"></span> | १ वर्षाचे उत्पन्न: <span id="pInc1"></span> | ३ वर्षे: <span id="pInc3"></span></p>
+            <p id="summaryCaste" style="display:none;"><strong>जात व पुरावा:</strong> जात: <span id="pCasteName"></span> | जुना पुरावा: <span id="pProofDetails"></span></p>
+            <p id="summaryNonCreamy" style="display:none;"><strong>नॉन क्रिमिलियर तपशील:</strong> आईचे नाव: <span id="pMoName"></span> | वडीलांचे तपशील: <span id="pFaDetails"></span> | उत्पन्न तपशील: <span id="pNcInc"></span></p>
+            
+            <p><strong>वास्तव्याचा कालावधी:</strong> सध्याच्या पत्त्यावर: <span id="pResYears"></span> | महाराष्ट्रात १५ वर्षे वास्तव्य: <span id="p15YesNo"></span></p>
+            <br>
+            <div style="display: flex; justify-content: space-between;">
+                <div>कायमचा पत्ता: <span id="pPermAdd"></span></div>
+                <div style="text-align: center;">अधिकृत स्वाक्षरी / शिक्का</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="no-print">
+        <button id="printButton" class="print-btn" style="display:none;" onclick="window.print()">दाखला प्रिंट / PDF सेव्ह करा (500KB ऑप्टिमाइज्ड)</button>
+    </div>
+</div>
+
+<script>
+    google.load("element", "1", { packages: ["transliteration"] });
+
+    function convertToMarathi(englishText, targetFieldId) {
+        if (englishText.trim() === "") {
+            document.getElementById(targetFieldId).value = "";
+            return;
+        }
+        google.elements.transliteration.transliterate([englishText], "en", "mr", function(result) {
+            if (result && result.length > 0) {
+                document.getElementById(targetFieldId).value = result[0].transliteratedWords[0];
+            }
+        });
+    }
+
+    // वय ऑटोमॅटिक किंवा हाताने टाकण्यासाठी
+    function calculateAge() {
+        const dobVal = document.getElementById('dob').value;
+        if (dobVal) {
+            const dobDate = new Date(dobVal);
+            const today = new Date();
+            let age = today.getFullYear() - dobDate.getFullYear();
+            const m = today.getMonth() - dobDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+                age--;
+            }
+            document.getElementById('age').value = age;
+        }
+    }
+
+    // मुख्य ड्रॉप-डाउननुसार योग्य तोच सेक्शन दाखवणे
+    function handleCertificateSelection() {
+        const selectedVal = document.getElementById('certTypeSelect').value;
+        
+        document.getElementById('sectionIncome').style.display = 'none';
+        document.getElementById('sectionCaste').style.display = 'none';
+        document.getElementById('sectionNonCreamy').style.display = 'none';
+
+        if (selectedVal === 'उत्पन्नाचा दाखला') {
+            document.getElementById('sectionIncome').style.display = 'block';
+        } else if (selectedVal === 'जातीचा दाखला') {
+            document.getElementById('sectionCaste').style.display = 'block';
+        } else if (selectedVal === 'नॉन क्रिमिलियर प्रमाणपत्र') {
+            document.getElementById('sectionNonCreamy').style.display = 'block';
+        }
+    }
+
+    function generateDocument(event) {
+        event.preventDefault();
+
+        const prefix = document.getElementById('prefix').value;
+        const nameMr = document.getElementById('appNameMr').value;
+        const father = document.getElementById('fatherNameMr').value;
+        const age = document.getElementById('age').value;
+        const aadhar = document.getElementById('aadharNo').value || '[लागू नाही]';
+        const occ = document.getElementById('occupation').value || 'शेती/इतर';
+        const currAdd = document.getElementById('currentAddress').value;
+
+        document.getElementById('pPrefix').innerText = prefix;
+        document.getElementById('pName').innerText = nameMr;
+        document.getElementById('pFullNameBottom').innerText = prefix + ' ' + nameMr;
+        document.getElementById('pFatherName').innerText = father;
+        document.getElementById('pAge').innerText = age;
+        document.getElementById('pAadhar').innerText = aadhar;
+        document.getElementById('pOcc').innerText = occ;
+        document.getElementById('pCurrAdd').innerText = currAdd;
+        document.getElementById('pPermAdd').innerText = document.getElementById('permanentAddress').value;
+        document.getElementById('pDobOut').innerText = document.getElementById('dob').value;
+        document.getElementById('pBirthPlaceOut').innerText = document.getElementById('birthPlace').value;
+        docu
